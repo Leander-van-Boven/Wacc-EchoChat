@@ -1,0 +1,24 @@
+name: Deploy Frontend
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to kubernetes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set the Kubernetes context
+        uses: azure/k8s-set-context@v1
+        with:
+          method: service-account
+          k8s-url: ${{ secrets.FRONTEND_DEPLOY_URL }}
+          k8s-secret: ${{ secrets.FRONTEND_DEPLOY_SECRET }}
+
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Update Kubernetes deployment
+        run: |
+          kubectl apply -f frontend/deployment/deployment.yaml
+          kubectl rollout restart deployment -n echochat-frontend frontend

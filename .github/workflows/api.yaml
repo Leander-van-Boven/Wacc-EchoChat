@@ -1,0 +1,97 @@
+name: Build, Test and Deploy API
+
+on:
+  push:
+    branches:
+      - development
+      - main
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: ./api
+          file: ./api/Production.dockerfile
+          push: true
+          tags: leandervboven/echochat:api
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+
+  test:
+    name: Test
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build testing image
+        uses: docker/build-push-action@v3
+        with:
+          context: ./api
+          file: ./api/Testing.dockerfile
+          push: true
+          tags: leandervboven/echochat:api-testing
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+#        run: docker build -t leandervboven/echochat:api-testing -f ./api/Testing.dockerfile ./api
+
+      - name: Start container
+        run: |
+          docker run -d -p 8080:8080 \
+          -e TESTING=true \
+          -e PORT=8080 \
+          -e JWT_KEY=$(openssl rand -base64 32) \
+          --name api-test \
+          leandervboven/echochat:api-testing
+
+      - name: Run pytest
+        run: |
+          docker exec api-test pytest tests
+
+
+  deploy:
+    name: Deploy to Kubernetes
+    needs: [ test, build ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set the Kubernetes context
+        uses: azure/k8s-set-context@v2
+        with:
+          method: service-account
+          k8s-url: ${{ secrets.API_DEPLOY_URL }}
+          k8s-secret: ${{ secrets.API_DEPLOY_SECRET }}
+
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Update Kubernetes deployment
+        run: |
+          kubectl apply -f api/deployment/deployment.yaml
+          kubectl rollout restart deployment -n echochat-api api

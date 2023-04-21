@@ -1,0 +1,26 @@
+name: Deploy API
+
+# Ideally, this should be a manual job only trigger-able after the 'test' job was successful, but that's not possible with GH actions as of now.
+# So for now it's just a manual job.
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set the Kubernetes context
+        uses: azure/k8s-set-context@v2
+        with:
+          method: service-account
+          k8s-url: ${{ secrets.API_DEPLOY_URL }}
+          k8s-secret: ${{ secrets.API_DEPLOY_SECRET }}
+
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Update Kubernetes deployment
+        run: |
+          kubectl apply -f api/deployment/deployment.yaml
+          kubectl rollout restart deployment -n echochat-api api

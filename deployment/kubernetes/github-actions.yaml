@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: github-actions-api-secret
+  namespace: echochat-api
+  annotations:
+    kubernetes.io/service-account.name: github-actions-api
+type: kubernetes.io/service-account-token
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: github-actions-api
+  namespace: echochat-api
+secrets:
+- name: github-actions-api-secret
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: github-actions-frontend-secret
+  namespace: echochat-frontend
+  annotations:
+    kubernetes.io/service-account.name: github-actions-frontend
+type: kubernetes.io/service-account-token
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: github-actions-frontend
+  namespace: echochat-frontend
+secrets:
+- name: github-actions-frontend-secret
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: github-actions
+rules:
+- apiGroups:
+  - ""
+  - extensions
+  - apps
+  - batch
+  - networking.k8s.io
+  - autoscaling
+  resources:
+  - "*"
+  verbs:
+  - "*"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: github-actions-binding
+subjects:
+- kind: ServiceAccount
+  name: github-actions-api
+  namespace: echochat-api
+- kind: ServiceAccount
+  name: github-actions-frontend
+  namespace: echochat-frontend
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: github-actions

@@ -1,0 +1,8 @@
+.terraform
+*.tfstate*
+# *.tfvars.json
+# id_rsa*
+*.img
+*openrc*
+!merlin.auto.tfvars.json
+!locals.auto.tfvars.json

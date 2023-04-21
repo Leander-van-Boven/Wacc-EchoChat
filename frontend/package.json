@@ -1,0 +1,52 @@
+{
+  "name": "wacc-chat-app",
+  "version": "0.1.0",
+  "description": "Vue frontend app for WaCC chat-app project",
+  "author": "Leander van Boven",
+  "scripts": {
+    "serve": "vue-cli-service serve --port 3000",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
+    "reset": "rm -rf node_modules && rm -rf package-lock.json && npm i && npm run serve",
+    "s": "npm run serve"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.2.0",
+    "@fortawesome/free-regular-svg-icons": "^6.2.0",
+    "@fortawesome/free-solid-svg-icons": "^6.2.0",
+    "@fortawesome/vue-fontawesome": "^2.0.8",
+    "apexcharts": "^3.36.0",
+    "axios": "^0.27.2",
+    "register-service-worker": "^1.7.2",
+    "socket.io-client": "^4.5.3",
+    "vue": "^2.6.14",
+    "vue-advanced-chat": "latest",
+    "vue-apexcharts": "^1.6.2",
+    "vue-native-notification": "^1.1.1",
+    "vue-router": "^3.5.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.16",
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-plugin-eslint": "~5.0.0",
+    "@vue/cli-plugin-pwa": "~5.0.0",
+    "@vue/cli-plugin-router": "~5.0.0",
+    "@vue/cli-plugin-unit-jest": "~5.0.0",
+    "@vue/cli-service": "~5.0.0",
+    "@vue/eslint-config-standard": "^4.0.0",
+    "@vue/test-utils": "^1.1.3",
+    "@vue/vue2-jest": "^27.0.0-alpha.2",
+    "babel-eslint": "^10.0.3",
+    "babel-jest": "^27.0.6",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-vue": "^8.0.3",
+    "jest": "^27.0.5",
+    "node-sass": "^6.0.1",
+    "prettier": "^2.4.1",
+    "sass-loader": "^10.1.1",
+    "vue-template-compiler": "^2.6.14"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,128 @@
+version: "3.8"
+
+services:
+  db.neo4j:
+    image: neo4j:4.4.11
+    container_name: WaCC.DB.Neo4J
+    volumes:
+      - neo4j-data:/data
+      - neo4j-plugins:/plugins
+    ports:
+      - "7474:7474"
+      - "7473:7473"
+      - "7687:7687"
+    networks:
+      - wacc-chat-app-network
+    environment:
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+      - NEO4J_AUTH=${NEO4J_USERNAME}/${NEO4J_PASSWORD}
+
+
+  db.elassandra:
+    image: strapdata/elassandra:6.2.3
+    container_name: WaCC.DB.Elassandra
+    volumes:
+      - ./local_storage_elassandra:/var/lib/cassandra
+    ports:
+      - "9042:9042"  # CQL
+      - "9200:9200"  # Elastic HTTP
+    networks:
+      - wacc-chat-app-network
+    environment:
+      - CASSANDRA_CLUSTER_NAME=${CASSANDRA_CLUSTER_NAME}
+      - CASSANDRA_DEFAULT_KEYSPACE=${CASSANDRA_DEFAULT_KEYSPACE}
+      - CASSANDRA_ENDPOINT_SNITCH=${CASSANDRA_ENDPOINT_SNITCH}
+
+
+  redis:
+    container_name: WaCC.Redis
+    image: redis:7.0.5-alpine
+    restart: always
+    command: redis-server --save 20 1 --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - ./local_storage_redis:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - wacc-chat-app-network
+
+
+  api.development:
+    container_name: WaCC.API.Development
+    image: echochat/api:latest-dev
+    build:
+      context: ./api
+      dockerfile: Development.dockerfile
+    volumes:
+      - type: bind
+        source: ./api/app
+        target: /api/app
+      - type: bind
+        source: ./api/tests
+        target: /api/tests
+    ports:
+      - "8080:8080"
+    networks:
+      - wacc-chat-app-network
+    environment:
+      - DEBUG=true
+      - PORT= 8080
+
+      - JWT_KEY=${JWT_KEY}
+
+      - NEO4J_USERNAME=${NEO4J_USERNAME}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - NEO4J_URI=${NEO4J_URI}
+
+      - CASSANDRA_URI=${ELASSANDRA_URI}
+      - CASSANDRA_PORT=${CASSANDRA_PORT}
+      - CASSANDRA_USER=${CASSANDRA_USER}
+      - CASSANDRA_PASSWORD=${CASSANDRA_PASSWORD}
+      - CASSANDRA_DEFAULT_KEYSPACE=${CASSANDRA_DEFAULT_KEYSPACE}
+      - CQLENG_ALLOW_SCHEMA_MANAGEMENT=true
+
+      - ELASTICSEARCH_URI=${ELASSANDRA_URI}
+      - ELASTICSEARCH_PORT=${ELASTICSEARCH_PORT}
+
+      - RABBITMQ_URI=${RABBITMQ_URI}
+      - RABBITMQ_PUBLISH_QUEUE_NAME=${RABBITMQ_PUBLISH_QUEUE_NAME}
+      - RABBITMQ_SUBSCRIBE_QUEUE_NAME=${RABBITMQ_SUBSCRIBE_QUEUE_NAME}
+
+      - REDIS_URI=${REDIS_URI}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+
+      - GRPC_TEMPO_OTLP_URI=WaCC.Tempo
+
+      - WAIT_HOSTS='' #WaCC.DB.Neo4J:7687,WaCC.DB.Elassandra:9042, WaCC.Redis:6379 #,WaCC.RabbitMQ:5672
+      - WAIT_HOSTS_TIMEOUT=300
+      - WAIT_SLEEP_INTERVAL=5
+      - WAIT_HOST_CONNECT_TIMEOUT=5
+      - WAIT_BEFORE_HOST_CHECK=5
+
+
+  frontend.development:
+    container_name: WaCC.Frontend.Development
+    image: echochat/frontend:latest-dev
+    build:
+      context: ./frontend
+      dockerfile: Development.dockerfile
+    volumes:
+      - ./frontend:/app/frontend
+      - frontend-node-modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    networks:
+      - wacc-chat-app-network
+    environment:
+      - VUE_APP_API_URL=localhost:8080
+
+
+volumes:
+  frontend-node-modules:
+  neo4j-data:
+  neo4j-plugins:
+
+
+networks:
+  wacc-chat-app-network:

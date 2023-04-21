@@ -1,0 +1,4 @@
+journalctl -xeu k3s.service
+truncate -s 0 id_rsa
+nmap
+cp kubeconfig.yaml ~/.kube/config

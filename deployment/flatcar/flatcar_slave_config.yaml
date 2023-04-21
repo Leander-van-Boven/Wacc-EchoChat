@@ -1,0 +1,46 @@
+passwd:
+  users:
+    - name: core
+      ssh_authorized_keys:
+        - ${sshkey}
+
+systemd:
+  units:
+    # Ensure docker starts automatically instead of being socket-activated
+    - name: docker.socket
+      enabled: false
+    - name: docker.service
+      enabled: true
+
+    - name: k3s-install.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Run K3s script
+        Wants=network-online.target
+        After=network.target network-online.target
+        ConditionPathexists=/opt/k3s-install.sh
+        ConditionPathExists=!/opt/bin/k3s
+        [Service]
+        Type=forking
+        TimoutStartSec=180
+        RemainAfterExit=yes
+        KillMode=process
+        Environment="INSTALL_K3S_EXEC=agent --token ${k3s_token} --server https://${master_host}:6443"
+        ExecStart=/usr/bin/sh -c "/opt/k3s-install.sh"
+        [Install]
+        WantedBy=multi-user.target
+
+storage:
+  files:
+    - path: /etc/hostname
+      filesystem: root
+      mode: 0644
+      contents:
+        inline: ${hostname}
+    - path: /opt/k3s-install.sh
+      filesystem: root
+      mode: 777
+      contents:
+        remote:
+          url: https://get.k3s.io

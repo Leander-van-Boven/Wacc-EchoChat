@@ -1,0 +1,28 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: echochat-api
+  labels:
+    name: echochat-api
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: echochat-frontend
+  labels:
+    name: echochat-frontend
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: echochat-databases
+  labels:
+    name: echochat-databases
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: echochat-monitoring
+  labels:
+    name: echochat-monitoring

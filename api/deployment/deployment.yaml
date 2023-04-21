@@ -1,0 +1,102 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: echochat-api
+  labels:
+    app: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: leandervboven/echochat:api
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              name: http
+          env:
+            - name: ROOT_PATH
+              value: /api
+            - name: DEFAULT_MESSAGE_FETCH_COUNT
+              value: "50"
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: echochat-api-secrets
+                  key: jwt-key
+
+            - name: CASSANDRA_URI
+              value: elassandra.echochat-databases.svc.cluster.local
+            - name: CASSANDRA_DEFAULT_KEYSPACE
+              value: echochat_keyspace
+            - name: CASSANDRA_USER
+              value: cassandra
+            - name: CASSANDRA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: echochat-api-secrets
+                  key: cassandra-password
+
+            - name: ELASTICSEARCH_URI
+              value: elassandra.echochat-databases.svc.cluster.local
+            - name: ELASTICSEARCH_PORT
+              value: "9200"
+
+            - name: NEO4J_USERNAME
+              value: neo4j
+            - name: NEO4J_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: echochat-api-secrets
+                  key: neo4j-password
+            - name: NEO4J_URI
+              value: neo4j-headless-neo4j.echochat-databases.svc.cluster.local
+
+            - name: REDIS_URI
+              value: redis-master.echochat-databases.svc.cluster.local
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: echochat-api-secrets
+                  key: redis-password
+
+            - name: GRPC_TEMPO_OTLP_URI
+              value: tempo.echochat-monitoring.svc.cluster.local
+            - name: GRPC_TEMPO_OTLP_PORT
+              value: "4317"
+
+            - name: SENTRY_DSN
+              value: ${SENTRY_DSN}
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "500m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+                path: /healthz
+                port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+                path: /healthz
+                port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      imagePullSecrets:
+        - name: leanderdockerhub

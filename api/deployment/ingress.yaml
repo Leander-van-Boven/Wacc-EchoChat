@@ -1,0 +1,33 @@
+---
+# Middleware
+# Strip prefix /overview
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: stripprefix-middleware
+  namespace: echochat-api
+spec:
+  stripPrefix:
+    forceSlash: false
+    prefixes:
+      - /api
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-ingress
+  namespace: echochat-api
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: echochat-api-stripprefix-middleware@kubernetescrd
+
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: api
+            port:
+              number: 80

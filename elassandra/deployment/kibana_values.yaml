@@ -1,0 +1,5 @@
+elasticsearchHosts: "http://elassandra.echochat-databases.svc.cluster.local:9200"
+imageTag: "6.2.4"
+kibanaConfig:
+  kibana.yaml: |
+    xpack.security.enabled: false

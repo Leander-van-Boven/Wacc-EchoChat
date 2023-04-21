@@ -1,0 +1,56 @@
+name: Build and Deploy Frontend
+
+on:
+  push:
+    branches:
+      - development
+      - main
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: ./frontend
+          file: ./frontend/Production.dockerfile
+          push: true
+          tags: leandervboven/echochat:frontend
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # TODO: test
+
+  deploy:
+    name: Deploy to kubernetes
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set the Kubernetes context
+        uses: azure/k8s-set-context@v1
+        with:
+          method: service-account
+          k8s-url: ${{ secrets.FRONTEND_DEPLOY_URL }}
+          k8s-secret: ${{ secrets.FRONTEND_DEPLOY_SECRET }}
+
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Update Kubernetes deployment
+        run: |
+          kubectl apply -f frontend/deployment/deployment.yaml
+          kubectl rollout restart deployment -n echochat-frontend frontend

@@ -1,0 +1,10 @@
+.gitignore
+Development.dockerfile
+Production.dockerfile
+**/.DS_Store
+build
+dist
+README.md
+**/node_modules
+**/dist
+deployment
